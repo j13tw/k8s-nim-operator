@@ -79,6 +79,7 @@ type NIMServiceSpec struct {
 	UserID           *int64 `json:"userID,omitempty"`
 	GroupID          *int64 `json:"groupID,omitempty"`
 	RuntimeClassName string `json:"runtimeClassName,omitempty"`
+	SchedulerName    string `json:"schedulerName,omitempty"`
 }
 
 // NIMCacheVolSpec defines the spec to use NIMCache volume
@@ -444,6 +445,11 @@ func (n *NIMService) GetRuntimeClassName() string {
 	return n.Spec.RuntimeClassName
 }
 
+// GetSchedulerName return the scheduler name for the NIMService deployment
+func (n *NIMService) GetSchedulerName() string {
+	return n.Spec.SchedulerName
+}
+
 // GetNIMCacheName returns the NIMCache name to use for the NIMService deployment
 func (n *NIMService) GetNIMCacheName() string {
 	return n.Spec.Storage.NIMCache.Name
@@ -588,6 +594,9 @@ func (n *NIMService) GetDeploymentParams() *rendertypes.DeploymentParams {
 	// Set runtime class
 	params.RuntimeClassName = n.GetRuntimeClassName()
 
+	// Set scheduler name
+	params.SchedulerName = n.GetSchedulerName()
+
 	return params
 }
 
@@ -634,6 +643,10 @@ func (n *NIMService) GetStatefulSetParams() *rendertypes.StatefulSetParams {
 
 	// Set runtime class
 	params.RuntimeClassName = n.GetRuntimeClassName()
+
+	// Set scheduler name
+	params.SchedulerName = n.GetSchedulerName()
+
 	return params
 }
 

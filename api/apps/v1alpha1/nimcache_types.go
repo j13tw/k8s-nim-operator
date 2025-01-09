@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"fmt"
 
+	utils "github.com/NVIDIA/k8s-nim-operator/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -31,6 +32,8 @@ import (
 
 // NIMCacheSpec defines the desired state of NIMCache
 type NIMCacheSpec struct {
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 	// Source is the NIM model source to cache
 	Source NIMSource `json:"source"`
 	// Storage is the target storage for caching NIM model
@@ -52,6 +55,8 @@ type NIMCacheSpec struct {
 	Env []corev1.EnvVar `json:"env,omitempty"`
 	// RuntimeClassName is the runtimeclass for the caching job
 	RuntimeClassName string `json:"runtimeClassName,omitempty"`
+	// SchedulerName is the scheduler for the caching job
+	SchedulerName string `json:"schedulerName,omitempty"`
 }
 
 // NIMSource defines the source for caching NIM model
@@ -240,6 +245,46 @@ type NIMCache struct {
 	Status NIMCacheStatus `json:"status,omitempty"`
 }
 
+// GetStandardLabels returns the standard set of labels for NIMCache resources
+func (n *NIMCache) GetStandardLabels() map[string]string {
+	return map[string]string{
+		"app":                          "k8s-nim-operator",
+		"app.kubernetes.io/name":       n.Name,
+		"app.kubernetes.io/managed-by": "k8s-nim-operator",
+	}
+}
+
+// GetNIMCacheLabels returns labels to apply to the NIMCache instance
+func (n *NIMCache) GetNIMCacheLabels() map[string]string {
+	standardLabels := n.GetStandardLabels()
+
+	if n.Spec.Labels != nil {
+		return utils.MergeMaps(standardLabels, n.Spec.Labels)
+	}
+
+	return standardLabels
+}
+
+// GetStandardAnnotations returns default annotations to apply to the NIMCache instance
+func (n *NIMCache) GetStandardAnnotations() map[string]string {
+	standardAnnotations := map[string]string{
+		"sidecar.istio.io/inject": "false",
+		"openshift.io/scc":        "nonroot",
+	}
+	return standardAnnotations
+}
+
+// GetNIMCacheAnnotations returns annotations to apply to the NIMCache instance
+func (n *NIMCache) GetNIMCacheAnnotations() map[string]string {
+	standardAnnotations := n.GetStandardAnnotations()
+
+	if n.Spec.Annotations != nil {
+		return utils.MergeMaps(standardAnnotations, n.Spec.Annotations)
+	}
+
+	return standardAnnotations
+}
+
 // GetPVCName returns the name to be used for the PVC based on the custom spec
 // Prefers pvc.Name if explicitly set by the user in the NIMCache instance
 func (n *NIMCache) GetPVCName(pvc PersistentVolumeClaim) string {
@@ -285,6 +330,14 @@ func (n *NIMCache) GetRuntimeClassName() *string {
 		return nil
 	}
 	return &n.Spec.RuntimeClassName
+}
+
+// GetSchedulerName return the scheduler name for the NIMCache Job
+func (n *NIMCache) GetSchedulerName() string {
+	if n.Spec.SchedulerName == "" {
+		return corev1.DefaultSchedulerName
+	}
+	return n.Spec.SchedulerName
 }
 
 // +kubebuilder:object:root=true

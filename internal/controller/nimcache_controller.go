@@ -927,25 +927,12 @@ func getCommand() []string {
 
 // constructPodSpec constructs a Pod specification
 func constructPodSpec(nimCache *appsv1alpha1.NIMCache, platformType k8sutil.OrchestratorType) *corev1.Pod {
-	labels := map[string]string{
-		"app":                          "k8s-nim-operator",
-		"app.kubernetes.io/name":       nimCache.Name,
-		"app.kubernetes.io/managed-by": "k8s-nim-operator",
-	}
-	annotations := make(map[string]string)
-
-	if platformType == k8sutil.OpenShift {
-		annotations = map[string]string{
-			"openshift.io/scc": "nonroot",
-		}
-	}
-
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        getPodName(nimCache),
 			Namespace:   nimCache.Namespace,
-			Labels:      labels,
-			Annotations: annotations,
+			Labels:      nimCache.GetNIMCacheLabels(),
+			Annotations: nimCache.GetNIMCacheAnnotations(),
 		},
 		Spec: corev1.PodSpec{
 			RuntimeClassName: nimCache.GetRuntimeClassName(),
@@ -973,6 +960,7 @@ func constructPodSpec(nimCache *appsv1alpha1.NIMCache, platformType k8sutil.Orch
 			ServiceAccountName: NIMCacheServiceAccount,
 			Tolerations:        nimCache.GetTolerations(),
 			NodeSelector:       nimCache.GetNodeSelectors(),
+			SchedulerName:      nimCache.GetSchedulerName(),
 		},
 	}
 
@@ -1022,19 +1010,6 @@ func (r *NIMCacheReconciler) getPodLogs(ctx context.Context, pod *corev1.Pod) (s
 func (r *NIMCacheReconciler) constructJob(ctx context.Context, nimCache *appsv1alpha1.NIMCache, platformType k8sutil.OrchestratorType) (*batchv1.Job, error) {
 	logger := r.GetLogger()
 	pvcName := getPvcName(nimCache, nimCache.Spec.Storage.PVC)
-	labels := map[string]string{
-		"app":                          "k8s-nim-operator",
-		"app.kubernetes.io/name":       nimCache.Name,
-		"app.kubernetes.io/managed-by": "k8s-nim-operator",
-	}
-
-	annotations := map[string]string{
-		"sidecar.istio.io/inject": "false",
-	}
-
-	if platformType == k8sutil.OpenShift {
-		annotations["openshift.io/scc"] = "nonroot"
-	}
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1044,8 +1019,8 @@ func (r *NIMCacheReconciler) constructJob(ctx context.Context, nimCache *appsv1a
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      labels,
-					Annotations: annotations,
+					Labels:      nimCache.GetNIMCacheLabels(),
+					Annotations: nimCache.GetNIMCacheAnnotations(),
 				},
 				Spec: corev1.PodSpec{
 					RuntimeClassName: nimCache.GetRuntimeClassName(),
@@ -1070,6 +1045,7 @@ func (r *NIMCacheReconciler) constructJob(ctx context.Context, nimCache *appsv1a
 					ServiceAccountName: NIMCacheServiceAccount,
 					Tolerations:        nimCache.GetTolerations(),
 					NodeSelector:       nimCache.GetNodeSelectors(),
+					SchedulerName:      nimCache.GetSchedulerName(),
 				},
 			},
 			BackoffLimit:            ptr.To[int32](5),   // retry max 5 times on failure

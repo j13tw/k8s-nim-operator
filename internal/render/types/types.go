@@ -80,6 +80,7 @@ type DeploymentParams struct {
 	UserID             *int64
 	GroupID            *int64
 	RuntimeClassName   string
+	SchedulerName      string
 	OrchestratorType   string
 }
 
@@ -111,6 +112,7 @@ type StatefulSetParams struct {
 	StartupProbe       *corev1.Probe
 	NIMCachePVC        string
 	RuntimeClassName   string
+	SchedulerName      string
 	OrchestratorType   string
 }
 

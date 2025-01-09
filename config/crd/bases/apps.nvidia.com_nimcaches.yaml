@@ -50,6 +50,10 @@ spec:
           spec:
             description: NIMCacheSpec defines the desired state of NIMCache
             properties:
+              annotations:
+                additionalProperties:
+                  type: string
+                type: object
               certConfig:
                 description: |-
                   CertConfig is the name of the ConfigMap containing the custom certificates.
@@ -190,6 +194,10 @@ spec:
                 description: GroupID is the group ID for the caching job
                 format: int64
                 type: integer
+              labels:
+                additionalProperties:
+                  type: string
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -221,6 +229,9 @@ spec:
               runtimeClassName:
                 description: RuntimeClassName is the runtimeclass for the caching
                   job
+                type: string
+              schedulerName:
+                description: SchedulerName is the scheduler for the caching job
                 type: string
               source:
                 description: Source is the NIM model source to cache
