@@ -33,3 +33,6 @@ kubeconfig
 
 # e2e logs
 e2e_logs
+
+# Action for `make build-installer` generate `dist/install.yaml`
+dist/install.yaml
